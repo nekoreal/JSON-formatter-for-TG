@@ -73,8 +73,6 @@ def list_and_dict_formatter(
         last_index=len(obj)-1
         if isinstance(obj,dict):
             for ind, (key, value) in enumerate(obj.items()):
-                if value=="child2_with_very_long_name_that_exceeds_limit_and_should_wrap":
-                    pass
                 is_last=(ind == last_index)
                 if isinstance(value, dict) or isinstance(value, list):
                     res=res+list_and_dict_formatter(
