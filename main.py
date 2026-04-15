@@ -10,10 +10,27 @@ ICONS = {
     'key': '🔑',
     'last': '└─',
     'not_last': '├─',
+    'not_linked': "│ "
 }
 
 
-
+def string_maxer(
+        max_length:int=60,
+        is_last:bool=False,
+        s:str="",
+        prefix:str="",
+        indent:int=3,
+):
+    res=""
+    prefix=F'{prefix}{ICONS["not_linked"] if not is_last else ""}'+(" "*indent)
+    i=0
+    while len(s)>0:
+        if i!=0:
+            s=prefix+s
+        res+=s[:max_length]+'\n'
+        s=s[max_length:]
+        i+=1
+    return res
 
 def value_formatter(
         value:str|float|int|None,
@@ -23,14 +40,18 @@ def value_formatter(
         is_last:bool=False,
 
 ):
-    res=""
-    skey = f'{ICONS["key"]}`{key}`: ' if key else ''
-    s=F'{prefix}{ICONS["last"] if is_last else ICONS["not_last"]}{skey}{ICONS[type(value)]}{value}'
-    for i in range((len(s) // max_length)+1):
-        res+=s[:max_length]+'\n'
-        s=s[max_length:]
-        s = F'{prefix}{"│ " if not is_last else ""}'+(" "*len(skey))+s
+    skey = f'{ICONS["key"]}{key}: ' if key  else ''
+    res=F'{prefix}{ICONS["last"] if is_last else ICONS["not_last"]}{skey}{ICONS[type(value)]}{value}'
+    if len(res)>max_length:
+        res = string_maxer(
+                        s=res,
+                        max_length=max_length,
+                        is_last=is_last,
+                        prefix=prefix, )
+    else:
+        res+="\n"
     return res
+
 
 def list_and_dict_formatter(
         obj:dict|list,
@@ -40,296 +61,245 @@ def list_and_dict_formatter(
         max_length: int = 60,
         max_recursion_depth: int = None,
         recursion_depth: int = 0,
-        is_last: bool = False,
+        is_last_obj: bool = False,
 ):
     res=""
-    if isinstance(obj, dict):
-        res=res+f"{prefix}{ f"{ICONS["key"]}`{key_name}`:" if key_name else ""} {ICONS[type(obj)]}dict({len(obj)})\n"
+    if isinstance(obj, dict) or isinstance(obj, list) :
+        s_obj=f"{prefix}{ f"{ICONS["key"]}{key_name}: " if key_name else ""}{ICONS[type(obj)]}{"dict" if type(obj)==dict else "aray"}({len(obj)})"
+        s_obj=string_maxer(max_length=max_length,is_last=(False if len(obj)!=0 else True),prefix=child_prefix,s=s_obj,indent=1)
+        res=res+s_obj
         if (not obj) or (recursion_depth == max_recursion_depth):
             return res
         last_index=len(obj)-1
-        for ind, (key, value) in enumerate(obj.items()):
-            is_last=(ind == last_index)
-            if isinstance(value, dict) or isinstance(value, list):
-                res=res+list_and_dict_formatter(
-                    obj=value,
-                    prefix=f"{child_prefix}{ICONS['last'] if is_last else ICONS['not_last']  }",
-                    child_prefix=f"{child_prefix}{"  " if is_last else "│ "}",
-                    key_name=key,
-                    max_length=max_length,
-                    max_recursion_depth=max_recursion_depth,
-                    recursion_depth=recursion_depth+1,
-                )
-                if not is_last: res=res+f"{child_prefix}│\n"
-            elif type(value) in (int, float, bool, str,type(None)):
-                res=res+value_formatter(
-                    value=value,
-                    key=key,
-                    prefix=child_prefix,
-                    is_last=is_last,
-                    max_length=max_length,
-                )
-            else:
-                res=res+f"{prefix}unreg type {type(value)}\n"
-
-    if isinstance(obj, list):
-        res = res + f"{prefix}{f"{ICONS["key"]}`{key_name}`:" if key_name else ""} {ICONS[type(obj)]}array({len(obj)})\n"
-        if (not obj) or (recursion_depth == max_recursion_depth):
-            return res
-        last_index = len(obj) - 1
-        for ind,value in enumerate(obj):
-            is_last = (ind == last_index)
-            if isinstance(value, dict) or isinstance(value, list):
-                res = res + list_and_dict_formatter(
-                    obj=value,
-                    prefix=f"{child_prefix}{ICONS['last'] if is_last else ICONS['not_last']}",
-                    child_prefix=f"{child_prefix}{"  " if is_last else "│ "}",
-                    key_name=None,
-                    max_length=max_length,
-                    max_recursion_depth=max_recursion_depth,
-                    recursion_depth=recursion_depth + 1,
-                )
-                if not is_last: res = res + f"{child_prefix}│\n"
-            elif type(value) in (int, float, bool, str, type(None)):
-                res = res + value_formatter(
-                    value=value,
-                    key=None,
-                    prefix=child_prefix,
-                    is_last=is_last,
-                    max_length=max_length,
-                )
-            else:
-                res = res + f"{prefix}unreg type {type(value)}\n"
+        if isinstance(obj,dict):
+            for ind, (key, value) in enumerate(obj.items()):
+                if value=="child2_with_very_long_name_that_exceeds_limit_and_should_wrap":
+                    pass
+                is_last=(ind == last_index)
+                if isinstance(value, dict) or isinstance(value, list):
+                    res=res+list_and_dict_formatter(
+                        obj=value,
+                        prefix=f"{child_prefix}{ICONS['last'] if is_last else ICONS['not_last']  }",
+                        child_prefix=f"{child_prefix}{"  " if is_last else "│ "}",
+                        key_name=key,
+                        max_length=max_length,
+                        max_recursion_depth=max_recursion_depth,
+                        recursion_depth=recursion_depth+1,
+                        is_last_obj=is_last
+                    )
+                    if not is_last: res=res+f"{child_prefix}│\n"
+                elif type(value) in (int, float, bool, str,type(None)):
+                    res=res+value_formatter(
+                        value=value,
+                        key=key,
+                        prefix=child_prefix,
+                        is_last=is_last,
+                        max_length=max_length,
+                    )
+                else:
+                    res=res+f"{prefix}unreg type {type(value)}\n"
+        else:
+            for ind,value in enumerate(obj):
+                is_last = (ind == last_index)
+                if isinstance(value, dict) or isinstance(value, list):
+                    res = res + list_and_dict_formatter(
+                        obj=value,
+                        prefix=f"{child_prefix}{ICONS['last'] if is_last else ICONS['not_last']}",
+                        child_prefix=f"{child_prefix}{"  " if is_last else "│ "}",
+                        key_name=None,
+                        max_length=max_length,
+                        max_recursion_depth=max_recursion_depth,
+                        recursion_depth=recursion_depth + 1,
+                        is_last_obj=is_last
+                    )
+                    if not is_last: res = res + f"{child_prefix}│\n"
+                elif type(value) in (int, float, bool, str, type(None)):
+                    res = res + value_formatter(
+                        value=value,
+                        key=None,
+                        prefix=child_prefix,
+                        is_last=is_last,
+                        max_length=max_length,
+                    )
+                else:
+                    res = res + f"{prefix}unreg type {type(value)}\n"
     return res
 
 
 def json_format(
-        body:dict|None=None,
+        body:dict|list|None=None,
         max_length:int=60,
         max_recursion_depth:int=None,
 ):
     if body is None:
         body = {"data": "empty"}
-    return list_and_dict_formatter(obj=body)
+    return list_and_dict_formatter(obj=body,max_length=max_length,max_recursion_depth=max_recursion_depth)
 
 
 
-
-
-big_data = {
-    "company": {
-        "name": "TechInnovations Inc.",
-        "founded": 2010,
-        "is_public": True,
-        "stock_price": 156.75,
-        "ceo": {
-            "name": "Елена Волкова",
-            "age": 52,
-            "previous_companies": ["Google", "Microsoft", "Amazon"],
-            "education": {
-                "degree": "PhD",
-                "field": "Computer Science",
-                "university": "Stanford",
-                "graduation_year": 1998
-            }
+a = {
+    "short": "short value",
+    "medium_key_that_is_around_40_chars_long": "medium value 40 chars",
+    "very_long_key_that_is_definitely_more_than_60_characters_long_and_should_wrap_properly": {
+        "short_key": "short",
+        "very_long_nested_key_that_exceeds_60_chars_and_must_wrap_with_correct_indent": "some value",
+        "another_medium_key_35_chars_here": "another_value"
+    },
+    "mixed_types": {
+        "int_val": 12345,
+        "float_val": 12345.6789,
+        "bool_true": True,
+        "bool_false": False,
+        "null_val": None,
+        "string_val": "Hello World"
+    },
+    "arrays": {
+        "short_array": [1, 2, 3],
+        "medium_array": ["one", "two", "three", "four", "five"],
+        "long_strings_array": [
+            "short",
+            "this is a very long string that exceeds sixty characters and should be wrapped",
+            "another long string that also needs to be wrapped correctly with proper indentation",
+            "short again"
+        ],
+        "mixed_array": [1, "string", True, None, 3.14, {"nested": "dict"}],
+        "array_of_dicts": [
+            {"id": 1, "name": "first", "description": "first item description"},
+            {"id": 2, "name": "second", "description": "second item with longer description that might wrap"},
+            {"id": 3, "name": "third", "description": "third"}
+        ]
+    },
+    "deep_nesting": {
+        "level1": {
+            "level2": {
+                "level3": {
+                    "level4": {
+                        "level5": "deep value",
+                        "level5_with_long_key_that_exceeds_limit": "value",
+                        "level5_array": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+                    },
+                    "level3_long_key_that_exceeds_60_chars_and_must_wrap": "value at level 3"
+                },
+                "level2_key_with_moderate_length": {
+                    "nested": "value",
+                    "another": 42
+                }
+            },
+            "level1_long_key_that_exceeds_60_chars_and_should_be_properly_formatted": "level1 value"
+        }
+    },
+    "long_values": {
+        "short_key": "very long string value that exceeds the maximum length of sixty characters and should be wrapped across multiple lines with proper indentation preserving the tree structure",
+        "another_key": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.",
+        "numeric_key": 123456789,
+        "list_with_long_strings": [
+            "first element with normal length",
+            "second element with very very very long text that goes beyond sixty characters and needs to be wrapped correctly",
+            "third",
+            "fourth element that also has extremely long content that will definitely exceed the max length and test the wrapping functionality"
+        ]
+    },
+    "edge_cases": {
+        "": "empty key",
+        "empty_string_value": "",
+        "very_long_key_with_special_chars_!@#$%^&*()_+": "value",
+        "unicode_key_😀_🎉_🔥": "unicode_value_😀_🎉_🔥_🚀_💡",
+        "key_with\nnewline": "value_with\nnewline",
+        "key_with\ttab": "value_with\ttab",
+        "zero": 0,
+        "negative": -100,
+        "large_number": 99999999999999999999,
+        "scientific": 1.23456789e10,
+        "boolean_list": [True, False, True, False],
+        "mixed_nesting": [
+            {"simple": "dict"},
+            ["nested", "list", {"inside": "value"}],
+            {"array_in_dict": [1, 2, {"deep": "value"}]}
+        ]
+    },
+    "large_collection": {
+        f"key_{i}": f"value_{i}" for i in range(20)
+    },
+    "repetitive_patterns": {
+        "pattern1": {
+            "id": 1,
+            "data": "x" * 30,
+            "metadata": "y" * 40,
+            "description": "z" * 80
         },
-        "departments": [
+        "pattern2": {
+            "id": 2,
+            "data": "a" * 30,
+            "metadata": "b" * 40,
+            "description": "c" * 80
+        },
+        "pattern3": {
+            "id": 3,
+            "data": "d" * 30,
+            "metadata": "e" * 40,
+            "description": "f" * 100
+        }
+    },
+    "recursive_structure": {
+        "name": "root",
+        "children": [
             {
-                "id": 1,
-                "name": "Engineering",
-                "head": "Алексей Смирнов",
-                "employees_count": 145,
-                "budget": 5000000.50,
-                "is_active": True,
-                "teams": [
+                "name": "child1",
+                "value": 10,
+                "children": [
                     {
-                        "name": "Frontend",
-                        "lead": "Мария Иванова",
-                        "members": 12,
-                        "technologies": ["React", "Vue", "Angular"]
+                        "name": "grandchild1",
+                        "value": 1,
+                        "children": []
                     },
                     {
-                        "name": "Backend",
-                        "lead": "Дмитрий Петров",
-                        "members": 18,
-                        "technologies": ["Python", "Go", "Java", "Node.js"]
-                    },
-                    {
-                        "name": "DevOps",
-                        "lead": "Сергей Сидоров",
-                        "members": 8,
-                        "technologies": ["Kubernetes", "Docker", "Terraform"]
+                        "name": "grandchild2",
+                        "value": 2,
+                        "children": []
                     }
                 ]
             },
             {
-                "id": 2,
-                "name": "Sales",
-                "head": "Ольга Козлова",
-                "employees_count": 67,
-                "budget": 2500000.00,
-                "is_active": True,
-                "regions": ["EMEA", "APAC", "NORAM", "LATAM"]
-            },
-            {
-                "id": 3,
-                "name": "HR",
-                "head": "Татьяна Морозова",
-                "employees_count": 23,
-                "budget": 800000.75,
-                "is_active": False
-            }
-        ],
-        "office_locations": [
-            {
-                "city": "Москва",
-                "address": "ул. Тверская, 15",
-                "coordinates": {"lat": 55.7558, "lng": 37.6176},
-                "employees": 180,
-                "is_headquarters": True
-            },
-            {
-                "city": "Санкт-Петербург",
-                "address": "Невский пр-т, 88",
-                "coordinates": {"lat": 59.9343, "lng": 30.3351},
-                "employees": 95,
-                "is_headquarters": False
-            },
-            {
-                "city": "Новосибирск",
-                "address": "Красный пр-т, 32",
-                "coordinates": {"lat": 55.0084, "lng": 82.9357},
-                "employees": 45,
-                "is_headquarters": False
+                "name": "child2_with_very_long_name_that_exceeds_limit_and_should_wrap",
+                "value": 20,
+                "children": [
+                    {
+                        "name": "grandchild3",
+                        "value": 3,
+                        "children": []
+                    }
+                ]
             }
         ]
     },
-    "products": [
-        {
-            "id": "P001",
-            "name": "Cloud Platform",
-            "price": 299.99,
-            "in_stock": True,
-            "rating": 4.8,
-            "features": ["Scalability", "Security", "Analytics"],
-            "reviews": [
-                {
-                    "user": "user123",
-                    "rating": 5,
-                    "comment": "Excellent product!",
-                    "date": "2024-01-15"
-                },
-                {
-                    "user": "user456",
-                    "rating": 4,
-                    "comment": "Good but exMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachinepensive",
-                    "date": "2024-01-20"
-                }
-            ]
-        },
-        {
-            "id": "P002",
-            "name": "AI AssisMachineMachineMachineMachineMachineMachineMachineMachineMachinetant",
-            "price": 49.99,
-            "in_stock": True,
-            "rating": 4.9,
-            "features": ["NLP", "MachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachine Learning", "API"],
-            "reviews": [
-                {
-                    "user": "user789",
-                    "rating": 5,
-                    "comment": "Life changer!",
-                    "date": "2024-01-10"
-                }
-            ]
-        },
-        {
-            "id": "P003",
-            "name": "Data AnalMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineytics Suite",
-            "price": 499.00,
-            "in_stock": False,
-            "rating": 4.5,
-            "features": ["Big Data", "VisualizaMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachinetion", "Reporting", "ETL"],
-            "reviews": []
-        }
-    ],
-    "users": {
-        "total": 15243,
-        "active": 8976,
-        "premium_users": 2341,
-        "demographics": {
-            "age_groups": {
-                "18-25": 3245,
-                "26-35": 5678,
-                "36-50": 4321,
-                "50+": 1999
-            },
-            "countries": [
-                {"country": "USA", "percentage": 45.2},
-                {"country": "UK", "percentage": 18.7},
-                {"country": "Germany", "perMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachinecentage": 15.3},
-                {"country": "Canada", "percentage": 12.1},
-                {"country": "Other", "percentage": 8.7}
-            ]
-        },
-        "recent_activity": {
-            "daily_active": 3421,
-            "weekly_active": 7654,
-            "monthly_active": 8976,
-            "peak_hours": [14, 15, 16, 20, 21]
-        }
-    },
-    "settings": {
-        "site": {
-            "theme": "dark",
-            "language": "MachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineen",
-            "notifications": True,
-            "items_per_page": 25
-        },
-        "api": {
-            "version": "v2",
-            "rate_limit": 1000,
-            "endpoints": ["/usMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineers", "/products", "/orders", "/analytics"],
-            "is_public": False
-        },
-        "security": {
-            "encryption": "AES-256",
-            "session_timeout": 3600,
-            "mfa_required": True,
-            "blocked_ips": ["192.168.1.100", "10.0.0.55", "172.16.0.10"]
-        }
-    },
-    "analytics": {
-        "revenue": {
-            "2023": 15000000.00,
-            "2024": 8900000.50,
-            "projected_2025": 22000000.00
-        },
-        "growth_rates": [12.5, 15.3, 18.7, 22.1, 25.4],
-        "top_customers": [
-            {"name": "Corp A", "spent": 250000, "industry": "Finance"},
-            {"name": "Corp B", "spent": 187500, "industry": "Retail"},
-            {"name": "Corp C", "spent": 125000, "industry": "Healthcare"}
-        ],
-        "conversion_funnel": {
-            "visitors": 100000,
-            "signups": 15000,
-            "trials": 12000,
-            "conversions": 8900,
-            "retention_rate": 0.78,
-"data_source": "producMachineMachineMachineMachineMachineffffffffffffffffMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachinetion_db",
-        }
-    },
-    "metadata": {
-        "version": "2.1.0",
-        "last_updated": "2024-01-30T10:30:00Z",
-        "is_validated": True,
-        "schema": None,
-        "data_source": "producMachineMachineMachineMachineMachineffffffffffffffffMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachinetion_db",
+    "testing_boundaries": {
+        "a": "x",
+        "ab": "xx",
+        "abc": "xxx",
+        "abcd": "xxxx",
+        "abcde": "xxxxx",
+        "abcdef": "xxxxxx",
+        "abcdefg": "xxxxxxx",
+        "abcdefgh": "xxxxxxxx",
+        "abcdefghi": "xxxxxxxxx",
+        "abcdefghij": "xxxxxxxxxx",
+        "abcdefghijk": "xxxxxxxxxxx",
+        "abcdefghijkl": "xxxxxxxxxxxx",
+        "abcdefghijklm": "xxxxxxxxxxxxx",
+        "abcdefghijklmn": "xxxxxxxxxxxxxx",
+        "abcdefghijklmno": "xxxxxxxxxxxxxxx",
+        "abcdefghijklmnop": "xxxxxxxxxxxxxxxx",
+        "abcdefghijklmnopq": "xxxxxxxxxxxxxxxxx",
+        "abcdefghijklmnopqr": "xxxxxxxxxxxxxxxxxx",
+        "abcdefghijklmnopqrs": "xxxxxxxxxxxxxxxxxxx",
+        "abcdefghijklmnopqrst": "xxxxxxxxxxxxxxxxxxxx"
     }
 }
+
 def main():
-    print(json_format(big_data))
+    print(json_format(
+        a
+    ))
 
 
 
