@@ -14,16 +14,22 @@ ICONS = {
 
 
 
+
 def value_formatter(
         value:str|float|int|None,
         key=None,
         prefix:str='',
+        max_length:int=60,
+        is_last:bool=False,
 
 ):
-    res = F'{prefix}'
-    if key:
-        res += f'{ICONS["key"]}`{key}`: '
-    res += f'{ICONS[type(value)]}{value}\n'
+    res=""
+    skey = f'{ICONS["key"]}`{key}`: ' if key else ''
+    s=F'{prefix}{ICONS["last"] if is_last else ICONS["not_last"]}{skey}{ICONS[type(value)]}{value}'
+    for i in range((len(s) // max_length)+1):
+        res+=s[:max_length]+'\n'
+        s=s[max_length:]
+        s = F'{prefix}{"│ " if not is_last else ""}'+(" "*len(skey))+s
     return res
 
 def list_and_dict_formatter(
@@ -59,7 +65,9 @@ def list_and_dict_formatter(
                 res=res+value_formatter(
                     value=value,
                     key=key,
-                    prefix=child_prefix+(ICONS['last'] if is_last else ICONS['not_last']),
+                    prefix=child_prefix,
+                    is_last=is_last,
+                    max_length=max_length,
                 )
             else:
                 res=res+f"{prefix}unreg type {type(value)}\n"
@@ -86,7 +94,9 @@ def list_and_dict_formatter(
                 res = res + value_formatter(
                     value=value,
                     key=None,
-                    prefix=child_prefix + (ICONS['last'] if is_last else ICONS['not_last']),
+                    prefix=child_prefix,
+                    is_last=is_last,
+                    max_length=max_length,
                 )
             else:
                 res = res + f"{prefix}unreg type {type(value)}\n"
@@ -212,18 +222,18 @@ big_data = {
                 {
                     "user": "user456",
                     "rating": 4,
-                    "comment": "Good but expensive",
+                    "comment": "Good but exMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachinepensive",
                     "date": "2024-01-20"
                 }
             ]
         },
         {
             "id": "P002",
-            "name": "AI Assistant",
+            "name": "AI AssisMachineMachineMachineMachineMachineMachineMachineMachineMachinetant",
             "price": 49.99,
             "in_stock": True,
             "rating": 4.9,
-            "features": ["NLP", "Machine Learning", "API"],
+            "features": ["NLP", "MachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachine Learning", "API"],
             "reviews": [
                 {
                     "user": "user789",
@@ -235,11 +245,11 @@ big_data = {
         },
         {
             "id": "P003",
-            "name": "Data Analytics Suite",
+            "name": "Data AnalMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineytics Suite",
             "price": 499.00,
             "in_stock": False,
             "rating": 4.5,
-            "features": ["Big Data", "Visualization", "Reporting", "ETL"],
+            "features": ["Big Data", "VisualizaMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachinetion", "Reporting", "ETL"],
             "reviews": []
         }
     ],
@@ -257,7 +267,7 @@ big_data = {
             "countries": [
                 {"country": "USA", "percentage": 45.2},
                 {"country": "UK", "percentage": 18.7},
-                {"country": "Germany", "percentage": 15.3},
+                {"country": "Germany", "perMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachinecentage": 15.3},
                 {"country": "Canada", "percentage": 12.1},
                 {"country": "Other", "percentage": 8.7}
             ]
@@ -272,14 +282,14 @@ big_data = {
     "settings": {
         "site": {
             "theme": "dark",
-            "language": "en",
+            "language": "MachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineen",
             "notifications": True,
             "items_per_page": 25
         },
         "api": {
             "version": "v2",
             "rate_limit": 1000,
-            "endpoints": ["/users", "/products", "/orders", "/analytics"],
+            "endpoints": ["/usMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineers", "/products", "/orders", "/analytics"],
             "is_public": False
         },
         "security": {
@@ -306,15 +316,16 @@ big_data = {
             "signups": 15000,
             "trials": 12000,
             "conversions": 8900,
-            "retention_rate": 0.78
+            "retention_rate": 0.78,
+"data_source": "producMachineMachineMachineMachineMachineffffffffffffffffMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachinetion_db",
         }
     },
     "metadata": {
         "version": "2.1.0",
         "last_updated": "2024-01-30T10:30:00Z",
-        "data_source": "production_db",
         "is_validated": True,
-        "schema": None
+        "schema": None,
+        "data_source": "producMachineMachineMachineMachineMachineffffffffffffffffMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachineMachinetion_db",
     }
 }
 def main():
